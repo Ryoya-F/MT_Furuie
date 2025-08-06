@@ -15,10 +15,14 @@ rf = 'C:\Users\ryoya\MasterThesis\MT_Furuie\results\Miwa_FFNN';
 %% ========== 設定 ==========
 
 % Model 1: r(t-3), r(t-5), r24(t-1) [7 9 33]
+% Model 2: r(t), ... r(t-6), r24(t-1) [4 5 6 7 8 9 10 33]
+% Model 3: r(t), ... r(t-6), r12(t-1), r24(t-1), r72(t-1), r240(t-1) [4 5 6 7 8 9 10 32 33 35 37]
+% Model 4: r(t), ... r(t-12), r24(t-1) [4 5 6 7 8 9 10 11 12 13 14 15 16 33]
+% Model 5: r(t), ... r(t-6), r24(t-1), Q(t-6), Q(t-7), Q(t-8) [4 5 6 7 8 9 10 33 23 24 25]
 
 cd(df)
 filename = 'Miwa_flood_for_FFNN.xlsx';
-inputCols  = [7 9 33];  % 入力列
+inputCols  = [4 5 6 7 8 9 10 33 23 24 25];  % 入力列
 outputCol = 3;        % 出力列
 
 
@@ -55,12 +59,12 @@ numInputs = numel(inputCols);
 layers = [
     featureInputLayer(numInputs, "Name", "input")
 
-    fullyConnectedLayer(20, "Name", "fc1")
+    fullyConnectedLayer(60, "Name", "fc1")
     sigmoidLayer("Name", "sigmoid1")
 
     dropoutLayer(0.1, "Name", "dropout1")
 
-    fullyConnectedLayer(10, "Name", "fc2")
+    fullyConnectedLayer(30, "Name", "fc2")
     sigmoidLayer("Name", "sigmoid2")
 
     fullyConnectedLayer(1, "Name", "fc_out")
@@ -68,13 +72,23 @@ layers = [
 ];
 
 %% ========= 学習オプション（ミニバッチ含む） =========
+% options = trainingOptions('adam', ...
+%     'MaxEpochs', 200, ...
+%     'MiniBatchSize', 24, ...
+%     'Shuffle', 'every-epoch', ...
+%     'ValidationData', {XVal, YVal}, ...
+%     'ValidationFrequency', 26, ... % 1エポックで2回検証される設定
+%     'ValidationPatience', 5, ...  % 5回連続で改善しなければ停止
+%     'Plots', 'training-progress', ...
+%     'Verbose', true);
+
+% 早期終了なしVersion
 options = trainingOptions('adam', ...
-    'MaxEpochs', 200, ...
+    'MaxEpochs', 500, ...
     'MiniBatchSize', 24, ...
     'Shuffle', 'every-epoch', ...
     'ValidationData', {XVal, YVal}, ...
     'ValidationFrequency', 26, ... % 1エポックで2回検証される設定
-    'ValidationPatience', 5, ...  % 5回連続で改善しなければ停止
     'Plots', 'training-progress', ...
     'Verbose', true);
 
@@ -109,7 +123,7 @@ fprintf('Test R^2:   %.3f\n', R2);
 %% ========= 結果保存 =========
 cd(rf)
 
-save('Miwa_FFNN_trained_1_6.mat', 'net', 'muX', 'sigmaX', 'muY', 'sigmaY');
+save('Miwa_FFNN_trained_5_10_3.mat', 'net', 'muX', 'sigmaX', 'muY', 'sigmaY');
 
 close all
 figure;
@@ -118,7 +132,7 @@ hold on;
 plot(YTrue, 'b-*', 'DisplayName', '実測濁度');
 legend; grid on;
 xlabel('Sample'); ylabel('濁度'); title('テストデータ予測結果');
-saveas(gcf, 'PredictionResult_1_6.png');
+saveas(gcf, 'PredictionResult_5_10_3.png');
 
 % グラフ作成
 close all
@@ -135,4 +149,4 @@ legend;
 grid on;
 
 % 保存
-saveas(gcf, 'LossHistory_1_6.png');
+saveas(gcf, 'LossHistory_5_10_3.png');
